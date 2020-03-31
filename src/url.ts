@@ -1,5 +1,6 @@
 import mongodb from 'mongodb'
 import mongoose from 'mongoose'
+
 type Callback = (error: any, data?: any) => void;
 
 export const initDB = (env: string) => {
@@ -12,8 +13,6 @@ const urlSchema = new Schema({
 });
 
 const URL = mongoose.model("URL", urlSchema);
-
-
 
 export const createAndSaveUrl = (urlString: string, done: Callback) => {
     const url = new URL({ url: urlString })

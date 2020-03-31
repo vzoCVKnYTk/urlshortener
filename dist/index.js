@@ -24,8 +24,8 @@ app.get('/', function (req, res) {
     res.sendFile(process.cwd() + '/views/index.html');
 });
 const dnsLookup = (req, res, next) => {
-    const host = req.body.url;
-    dns_1.default.lookup(host, (error, _address, _family) => {
+    const originalUrl = new URL(req.body.url);
+    dns_1.default.lookup(originalUrl.hostname, (error, _address, _family) => {
         if (error) {
             console.log(error);
             res.json({ error: "Invalid URL" });
@@ -40,28 +40,30 @@ const createShortUrl = (req, res, next) => {
     const url = req.body.url;
     url_1.createAndSaveUrl(url, (err, data) => {
         if (err) {
-            return (next(err));
+            res.status(500).send('Internal Server Error');
         }
         if (!data) {
-            console.log('Missing `done()` argument');
-            return next({ message: 'Missing callback argument' });
+            console.log('Missing `done()` argument', data);
+            res.status(500).send('Internal Server Error');
         }
-        url_1.findURLById(data.id, (findError, url) => {
+        url_1.findURLById(data._id, (findError, urlObject) => {
             if (findError) {
-                return next(findError);
+                res.status(404).send('Could not find the url you wanted');
             }
-            res.json(url);
-            url.remove();
+            res.json({ url: urlObject.url, short_url: urlObject._id });
         });
     });
-    res.json({ url: req.body.url, short_url: 1 });
 };
 // your first API endpoint... 
 app.post("/api/shorturl/new", dnsLookup, createShortUrl);
 app.get("/api/shorturl/:id", (req, res) => {
     // Lookup id in mongo
-    // findURLById()
-    // Route to the url
+    url_1.findURLById(req.params.id, (findError, urlObject) => {
+        if (findError) {
+            res.status(404).send('Could not find the url you wanted');
+        }
+        res.redirect(urlObject.url);
+    });
 });
 app.listen(port, () => {
     console.log('Node.js listening ...');
