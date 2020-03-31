@@ -36,7 +36,6 @@ const dnsLookup = (
   const originalUrl = new URL(req.body.url)
   dns.lookup(originalUrl.hostname, (error, _address, _family) => {
     if (error) {
-      console.log(error)
       res.json({ error: "Invalid URL"})
     } else {
       next()
